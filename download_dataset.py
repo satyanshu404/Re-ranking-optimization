@@ -14,6 +14,6 @@ subprocess.run(["mkdir", "-p", DATA_DIR], check=False)
 
 # Download each file
 logging.log(logging.INFO, "Downloading files...")
-for url in const.URLS:
+for url in const.URLS():
     subprocess.run(["wget", url, "-P", DATA_DIR], check=False)
 
