@@ -1,4 +1,7 @@
-'''Script to generate triples comprising Query, Positive, and Random documents.'''
+'''Script to generate triples comprising Query, Positive, and Random documents.
+This script will generate a pair of positive and negative documents for each query.
+We select 1st docs as positive and a random doc from 100 as negative.
+'''
 import csv
 import random
 import gzip
