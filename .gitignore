@@ -6,6 +6,11 @@ __pycache__/
 # C extensions
 *.so
 
+#custom
+*.ipynb_checkpoints
+*.ipynb
+MSMARCO
+
 # Distribution / packaging
 .Python
 build/
