@@ -1,10 +1,23 @@
 '''All the constants used in the project are defined here'''
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import List
+
 
 @dataclass
 class BertConstants:
     ''' Constants for BERT model '''
     MODEL_CHECKPOINT = 'bert-base-uncased'
+
+@dataclass
+class DownloadMSMARCOConstants:
+    ''' Constants for downloading MSMARCO dataset '''
+    DOWNLOAD_PATH = "data/MSMARCO"
+    URLS: List(str) = field(default_factory=lambda: [
+        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-doctrain-queries.tsv.gz",
+        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-docs-lookup.tsv.gz",
+        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-doctrain-qrels.tsv.gz",
+        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-doctrain-top100.gz",
+        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-docs.tsv.gz"])
 
 @dataclass
 class MapMSMARCOConstants:
