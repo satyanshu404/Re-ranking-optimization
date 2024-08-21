@@ -2,3 +2,6 @@ transformers
 datasets
 torch
 gzip
+scikit-learn
+pandas
+langchain-text-splitters
