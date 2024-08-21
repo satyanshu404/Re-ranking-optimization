@@ -7,12 +7,27 @@ from typing import List
 class BertConstants:
     ''' Constants for BERT model '''
     MODEL_CHECKPOINT = 'bert-base-uncased'
+    TEST_SIZE = 0.2
+    BATCH_SIZE = 32
+    LEARNING_RATE = 1e-5
+    EPOCHS = 1
+    NUMBER_OF_CLASSES = 2
+    DATASET_PATH = "data/training/dataset.tsv"
+    SAVE_MODEL_DIR = "models/Bert"
+    SAVE_TOKENIZER_DIR = "models/Bert"
+
+@dataclass
+class CreateDatasetConstants:
+    ''' Constants for creating dataset '''
+    TRIPLES_PATH = "data/MSMARCO/triples.tsv"
+    SAVE_PATH = "data/training/dataset.tsv"
+    CHUNK_SIZE = 1500
 
 @dataclass
 class DownloadMSMARCOConstants:
     ''' Constants for downloading MSMARCO dataset '''
     DOWNLOAD_PATH = "data/MSMARCO"
-    URLS: List(str) = field(default_factory=lambda: [
+    URLS: List = field(default_factory=lambda: [
         "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-doctrain-queries.tsv.gz",
         "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-docs-lookup.tsv.gz",
         "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-doctrain-qrels.tsv.gz",
