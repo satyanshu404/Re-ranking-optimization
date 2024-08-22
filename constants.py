@@ -8,13 +8,14 @@ class BertConstants:
     ''' Constants for BERT model '''
     MODEL_CHECKPOINT = 'bert-base-uncased'
     TEST_SIZE = 0.2
-    BATCH_SIZE = 32
+    BATCH_SIZE = 16
     LEARNING_RATE = 1e-5
-    EPOCHS = 1
+    EPOCHS = 5
     NUMBER_OF_CLASSES = 2
     DATASET_PATH = "data/training/dataset.tsv"
     SAVE_MODEL_DIR = "models/Bert"
     SAVE_TOKENIZER_DIR = "models/Bert"
+    SAVE_MODEL_PATH = "bert-base-uncased-finetuned-v0.3"
 
 @dataclass
 class CreateDatasetConstants:
@@ -42,5 +43,6 @@ class MapMSMARCOConstants:
     DOCTRAIN_QRELS_PATH = "data/MSMARCO/msmarco-doctrain-qrels.tsv.gz"
     DOCTRAIN_TOP100_PATH = "data/MSMARCO/msmarco-doctrain-top100.gz"
     DOCS_PATH = "data/MSMARCO/msmarco-docs.tsv.gz"
-    SAVE_PATH = "data/MSMARCO/triples.tsv"
-    NUMBER_OF_TRIPLES = 1000
+    SAVE_PATH = "data/MSMARCO/triples_10k.tsv"
+    NUMBER_OF_TRIPLES = 10000
+    TRIPLET_COMPLETED = 1000
