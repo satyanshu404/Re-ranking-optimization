@@ -55,6 +55,8 @@ def generate_triples(outfile, triples_to_generate):
     status = defaultdict(int)
     unjudged_rank_to_keep = random.randint(1, 100)
     already_done_a_triple_for_topicid = None
+    total_completed_triplets:int = const.TRIPLET_COMPLETED*100     #  total queries * 100 docs
+    triples_to_generate -= const.TRIPLET_COMPLETED
 
     with gzip.open(const.DOCTRAIN_TOP100_PATH, 'rt', encoding='utf8') as top100f, \
          gzip.open(const.DOCS_PATH, 'rt', encoding="utf8") as file, \
@@ -62,6 +64,11 @@ def generate_triples(outfile, triples_to_generate):
         
         logging.log(logging.INFO, "Processing line %s...", triples_to_generate)
         for line in top100f:
+            # Skip all completed triples
+            if total_completed_triplets > 0:
+                total_completed_triplets -= 1
+                continue
+
             row = line.split()
             if len(row) < 6:
                 continue
