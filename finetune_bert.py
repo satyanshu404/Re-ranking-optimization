@@ -9,10 +9,9 @@ from sklearn.model_selection import train_test_split
 from transformers import BertForSequenceClassification, AutoTokenizer
 from torch.utils.data import Dataset, DataLoader
 from torch.optim import AdamW
-from Documents.testing.full_fine_tuning import DATASET_PATH
 
 # Configure logging
-logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.INFO)
 # logging.basicConfig(level=logging.INFO)
 
 class TokenData(Dataset):
@@ -39,37 +38,19 @@ class TokenData(Dataset):
 class Bert:
     """BERT model for sequence classification"""
     def __init__(self, model_checkpoint:str=const.MODEL_CHECKPOINT,
-                 num_labels: int=const.NUMBER_OF_CLASSES) -> None:
+                 num_labels: int=const.NUMBER_OF_CLASSES,
+                 device: torch.device="cpu") -> None:
         """Initialize the BERT model"""
+        self.device = device
         self.model = BertForSequenceClassification.from_pretrained(model_checkpoint,
                                                                    num_labels=num_labels)
         self.tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
         self.optimizer = AdamW(self.model.parameters(), lr=const.LEARNING_RATE)
-        self.device = self.select_device()
         self.model.to(self.device)
         # loggings
         logging.log(logging.INFO, "Model and tokenizer loaded with %s classes...", num_labels)
-        logging.log(logging.INFO, "Optimizer set to %s with learning rate %s...", self.optimizer, const.LEARNING_RATE)
+        logging.log(logging.INFO, "Optimizer set to %s with learning rate %s...", self.optimizer.__class__.__name__, const.LEARNING_RATE)
         logging.log(logging.INFO, "Device set to %s...", self.device)
-
-    def select_device(self, required_free_memory_gb: int=10) -> torch.device:
-        '''Select the device based on the required free memory'''
-        if torch.cuda.is_available():
-            # Convert required memory to bytes
-            required_free_memory = required_free_memory_gb * 1024 ** 3
-            
-            # Check if the 0th GPU has at least 10 GB of free memory
-            free_memory = torch.cuda.get_device_properties(0).total_memory - torch.cuda.memory_reserved(0)
-            if free_memory >= required_free_memory:
-                device = torch.device("cuda:0")
-                logging.log(logging.INFO, "Using GPU:0...")
-            else:
-                device = torch.device("cuda:1")
-                logging.log(logging.INFO, "Using GPU:1...")
-        else:
-            device = torch.device("cpu")
-            logging.log(logging.INFO, "No GPU has at least %s GB free, using CPU...", required_free_memory_gb)
-        return device
     
     def read_data(self, data_path: str) -> pd.DataFrame:
         '''Read the data from the given tsv path only'''
@@ -102,20 +83,29 @@ class Bert:
                   loss_fn) -> None:
         '''Evaluate the model'''
         self.model.eval()
+        
+        total_loss = 0.0
+        correct = 0
+        total_examples = 0
+
         with torch.no_grad():
-            for idx, batch in enumerate(test_loader):
+            for batch in test_loader:
                 input_ids = batch['input_ids'].to(self.device)
                 attention_mask = batch['attention_mask'].to(self.device)
                 labels = batch['labels'].to(self.device)
                 
-                outputs = self.model(input_ids, attention_mask=attention_mask, labels=labels)
+                outputs = self.model(input_ids, attention_mask=attention_mask)
                 pred = outputs.logits
-                loss = loss_fn(pred, batch['labels'])
-                # loss = outputs[0]
-                # Calculating the running loss for logging purposes
-                test_batch_loss = loss.item()
-                test_last_loss = test_batch_loss / const.BATCH_SIZE
-                logging.log(logging.INFO, "Testing batch %s last loss: %s", idx + 1, test_last_loss)
+                loss = loss_fn(pred, labels)
+
+                total_loss += loss.item()
+                correct += (pred.argmax(1) == labels).sum().item()
+                total_examples += labels.size(0)
+            average_loss = total_loss / len(test_loader)
+            accuracy = correct / total_examples
+            logging.log(logging.INFO, "Test loss: %s", average_loss)
+            logging.log(logging.INFO, "Testing accuracy: %s", accuracy)
+
     
     def trainer(self,
                 train_loader: DataLoader,
@@ -125,24 +115,28 @@ class Bert:
         '''Train the model'''
         for epoch in range(epochs):
             self.model.train()
-            for idx, batch in enumerate(train_loader):
+            logging.log(logging.INFO, "Epoch %d, %s", epoch + 1, '='*50)
+            total_train_loss = 0.0
+            
+            for batch in train_loader:
                 self.optimizer.zero_grad()
                 input_ids = batch['input_ids'].to(self.device)
                 attention_mask = batch['attention_mask'].to(self.device)
                 labels = batch['labels'].to(self.device)
                 
-                outputs = self.model(input_ids, attention_mask=attention_mask, labels=labels)
+                outputs = self.model(input_ids, attention_mask=attention_mask)
                 pred = outputs.logits
-                loss = loss_fn(pred, batch['labels'])
-                # loss = outputs[0]
+                loss = loss_fn(pred, labels)
+                
                 loss.backward()
                 self.optimizer.step()
-                # Calculating the running loss for logging purposes
-                train_batch_loss = loss.item()
-                train_last_loss = train_batch_loss / const.BATCH_SIZE
-                logging.log(logging.INFO, "Training batch %s last loss: %s", idx + 1, train_last_loss)
-            logging.log(logging.INFO, "Epoch %s completed...", epoch+1)
+                total_train_loss += loss.item()
+            average_train_loss = total_train_loss / len(train_loader)
+            logging.log(logging.INFO, "Training loss: %s", average_train_loss)
+
+            # Call the evaluator function for the test set
             self.evaluator(test_loader, loss_fn)
+
 
     def train(self,
               file_path: str,
@@ -169,8 +163,9 @@ class Bert:
             os.makedirs(const.SAVE_MODEL_DIR)
 
         # Save the model and tokenizer
-        self.model.save_pretrained(const.SAVE_MODEL_DIR)
-        self.tokenizer.save_pretrained(const.SAVE_MODEL_DIR)
+        save_path: str = os.path.join(const.SAVE_MODEL_DIR, const.SAVE_MODEL_PATH)
+        self.model.save_pretrained(save_path)
+        self.tokenizer.save_pretrained(save_path)
         logging.log(logging.INFO, "Model and tokenizer saved successfully at %s...", const.SAVE_MODEL_DIR)
 
 if __name__ == "__main__":
@@ -179,7 +174,8 @@ if __name__ == "__main__":
     DATASET_PATH = const.DATASET_PATH
     EPOCHS = const.EPOCHS
     LOSS_FUNCTION = cross_entropy_loss()
+    DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # train the model
-    bert = Bert(MODEL_NAME)
+    bert = Bert(MODEL_NAME, device=DEVICE)
     bert.train(DATASET_PATH, EPOCHS, LOSS_FUNCTION)
