@@ -72,12 +72,15 @@ class PairWizeFormatter:
 
         df2 = pd.DataFrame({
             "text": prompts_2,
-            "label": [-1]*len(prompts_2)
+            "label": [0]*len(prompts_2)
         })
 
         # Concatenate the dataframes
         df = pd.concat([df1, df2], ignore_index=True)
         df = df.sample(frac=1).reset_index(drop=True)
+
+        logging.log(logging.INFO, "Dataset with 0 lables: %s", len(df[df['label']==0]))
+        logging.log(logging.INFO, "Dataset with 1 lables: %s", len(df[df['label']==1]))
 
         # Save the data
         df.to_csv(self.save_path, sep='\t', index=None)
