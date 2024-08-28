@@ -4,7 +4,7 @@ import logging
 import torch
 import pandas as pd
 from constants import BertConstants as const
-from losses import cross_entropy_loss
+from losses import CrossEntropyLoss
 from sklearn.model_selection import train_test_split
 from transformers import BertForSequenceClassification, AutoTokenizer
 from torch.utils.data import Dataset, DataLoader
@@ -47,10 +47,15 @@ class Bert:
         self.tokenizer = AutoTokenizer.from_pretrained(model_checkpoint)
         self.optimizer = AdamW(self.model.parameters(), lr=const.LEARNING_RATE)
         self.model.to(self.device)
+
         # loggings
-        logging.log(logging.INFO, "Model and tokenizer loaded with %s classes...", num_labels)
-        logging.log(logging.INFO, "Optimizer set to %s with learning rate %s...", self.optimizer.__class__.__name__, const.LEARNING_RATE)
-        logging.log(logging.INFO, "Device set to %s...", self.device)
+        logging.log(logging.INFO, "MODEL INFORMATION: %s", '='*50)
+        logging.log(logging.INFO, "Model and tokenizer loaded from: %s...", model_checkpoint)
+        logging.log(logging.INFO, "Number of classes set to: %s...", num_labels)
+        logging.log(logging.INFO, "Optimizer set to: %s...", self.optimizer.__class__.__name__)
+        logging.log(logging.INFO, "Learning rate set to: %s...", const.LEARNING_RATE)
+        logging.log(logging.INFO, "Device set to: %s...", self.device)
+        logging.log(logging.INFO, "%s", '='*69)
     
     def read_data(self, data_path: str) -> pd.DataFrame:
         '''Read the data from the given tsv path only'''
@@ -115,7 +120,7 @@ class Bert:
         '''Train the model'''
         for epoch in range(epochs):
             self.model.train()
-            logging.log(logging.INFO, "Epoch %d, %s", epoch + 1, '='*50)
+            logging.log(logging.INFO, "Epoch %d: %s", epoch + 1, '='*50)
             total_train_loss = 0.0
             
             for batch in train_loader:
@@ -140,8 +145,8 @@ class Bert:
 
     def train(self,
               file_path: str,
-              epochs: int=const.EPOCHS,
-              loss_function = cross_entropy_loss()) -> None:
+              loss_function,
+              epochs: int=const.EPOCHS) -> None:
         '''Train the model'''
         # Read the data
         data = self.read_data(file_path)
@@ -173,9 +178,10 @@ if __name__ == "__main__":
     MODEL_NAME = const.MODEL_CHECKPOINT
     DATASET_PATH = const.DATASET_PATH
     EPOCHS = const.EPOCHS
-    LOSS_FUNCTION = cross_entropy_loss()
+    # LOSS_FUNCTION = torch.nn.CrossEntropyLoss()
+    LOSS_FUNCTION = CrossEntropyLoss()   # custom loss function
     DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     # train the model
     bert = Bert(MODEL_NAME, device=DEVICE)
-    bert.train(DATASET_PATH, EPOCHS, LOSS_FUNCTION)
+    bert.train(DATASET_PATH, LOSS_FUNCTION, EPOCHS)
