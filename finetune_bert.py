@@ -1,4 +1,10 @@
-'''Script to fine-tune BERT model on the MS MARCO dataset'''
+'''Script to fine-tune BERT model on the MS MARCO dataset
+The dataset is expected to be in the TSV format with the following columns:
+- text: The input text for the model
+- label: The label for the input text
+
+Change the hyperparameters in the BertConstants class from constants.py file.
+'''
 import os
 import logging
 import torch
@@ -53,6 +59,7 @@ class Bert:
         logging.log(logging.INFO, "Model and tokenizer loaded from: %s...", model_checkpoint)
         logging.log(logging.INFO, "Number of classes set to: %s...", num_labels)
         logging.log(logging.INFO, "Optimizer set to: %s...", self.optimizer.__class__.__name__)
+        logging.log(logging.INFO, "Batch size set to: %s...", const.BATCH_SIZE)
         logging.log(logging.INFO, "Learning rate set to: %s...", const.LEARNING_RATE)
         logging.log(logging.INFO, "Device set to: %s...", self.device)
         logging.log(logging.INFO, "%s", '='*69)
