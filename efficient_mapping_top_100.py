@@ -1,3 +1,10 @@
+'''
+This Script maps the top-k q-d pairs from the top-100 docs to the relevant and non-relevant docs
+Main Idea:
+    - The doc in qrel is consider as relevant
+    - The doc in top-100 but not in qrel is consider as non-relevant
+The script will generate two files, one for relevant and the other for non-relevant documents.
+'''
 import csv
 import random
 import gzip
@@ -96,7 +103,7 @@ def load_docs(file_path, required_doc_ids, positive_doc_ids):
                 docs[doc_id] = content
     return docs
 
-def generate_files(output_file_path: str):
+def generate_files(relevant_outfile, non_relevant_outfile):
     """Generate separate files for relevant and non-relevant documents."""
     status = defaultdict(int)
     required_doc_ids = get_required_doc_ids(const.DOCTRAIN_TOP100_PATH, SUBSET_SIZE)
@@ -107,9 +114,11 @@ def generate_files(output_file_path: str):
     top_k = load_top_k(const.DOCTRAIN_TOP100_PATH)
     all_docs = load_docs(const.DOCS_PATH, required_doc_ids, positive_doc_ids)
 
-    with open(output_file_path, 'w', encoding="utf8") as file:
+    with open(relevant_outfile, 'w', encoding="utf8") as rel_out, \
+        open(non_relevant_outfile, 'w', encoding="utf8") as non_rel_out:
         
-        file.write("qid\tdocid\tquery\tdoc\trelevance\n")
+        rel_out.write("qid\tdocid\tquery\tdoc\n")
+        non_rel_out.write("qid\tdocid\tquery\tdoc\n")
 
         logging.info("Processing lines...")
         for idx, (qid, doc_ids) in enumerate(top_k.items()):
@@ -126,8 +135,7 @@ def generate_files(output_file_path: str):
                 status['missing_docs'] += 1
                 continue
             doc = all_docs[positive_doc_id]
-            relevancy = 1
-            file.write(f"{qid}\t{positive_doc_id}\t{queries[qid]}\t{doc}\t{relevancy}\n")
+            rel_out.write(f"{qid}\t{positive_doc_id}\t{queries[qid]}\t{doc}\n")
 
             # Remove the positive doc from the list of doc_ids if it's present
             if positive_doc_id in doc_ids:
@@ -142,15 +150,15 @@ def generate_files(output_file_path: str):
 
             negative_doc_id = random.choice(available_negative_docs)
             doc = all_docs[negative_doc_id]
-            relevancy = 0
-            file.write(f"{qid}\t{negative_doc_id}\t{queries[qid]}\t{doc}\t{relevancy}\n")
+            non_rel_out.write(f"{qid}\t{negative_doc_id}\t{queries[qid]}\t{doc}\n")
             status['kept'] += 1
+    logging.log(logging.INFO, "Files generated successfully...")
     return status
 
 if __name__ == "__main__":
     # Generate files and print statistics
     logging.info("Generating separate files for relevant and non-relevant documents...")
-    stats = generate_files(const.SAVE_PATH)
+    stats = generate_files(const.RELEVANT_SAVE_PATH, const.NON_RELEVANT_SAVE_PATH)
     logging.info("Statistics:")
     for key, val in stats.items():
         print(f"{key}: {val}")
