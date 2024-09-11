@@ -1,5 +1,8 @@
 '''
 This script is for getting the performance of the model on the test data.
+The test data must have the following columns:
+    - text: The text data
+    - label: The label data
 This script logs the following metrics:
     - Accuracy
     - Precision
