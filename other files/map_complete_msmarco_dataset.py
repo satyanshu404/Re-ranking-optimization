@@ -46,7 +46,7 @@ def map_data(queries_, doc_offsets_, outfile):
          open(outfile, 'w', encoding='utf8') as out:
 
         writer = csv.writer(out, delimiter="\t")
-        writer.writerow(["qid", "docid", "query", "doc_content", "rank"])
+        writer.writerow(["qid", "docid", "query", "doc_content", "rank", "score"])
 
         logging.info("Mapping data for training...")
         current_topic_id = None
@@ -55,7 +55,7 @@ def map_data(queries_, doc_offsets_, outfile):
 
         for line in top100f:
             row = line.split()
-            topic_id, _, doc_id, rank, _, _ = row
+            topic_id, _, doc_id, rank, score, _ = row
 
             if topic_id != current_topic_id:
                 current_topic_id = topic_id
@@ -63,14 +63,14 @@ def map_data(queries_, doc_offsets_, outfile):
                 count += 1
                 logging.info("Processing query %s...", count)
 
-            if doc_count < 10:
+            if doc_count < const.TOP_K_DOCUMENTS:
                 # Retrieve query string and document content
                 logging.info("Processing doc %s...", doc_count+1)
                 query = queries_[topic_id]
                 doc_content = get_doc_content(doc_id, docs_file, doc_offsets_)
 
                 # Write to output file
-                writer.writerow([topic_id, doc_id, query, doc_content, rank])
+                writer.writerow([topic_id, doc_id, query, doc_content, rank, score])
                 doc_count += 1
 
 if __name__ == "__main__":

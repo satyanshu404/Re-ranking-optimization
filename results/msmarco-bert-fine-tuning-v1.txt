@@ -1,0 +1,21 @@
+
+Training set: 4k samples (relevant + non-relevant)
+Model path: models/Bert/bert-large-uncased-finetuned-v1.0
+Epoch 10: ==================================================
+Training loss: 0.008242377856731764
+Test loss: 0.11702317787585344
+Test accuracy: 0.98125
+
+Training set: 18k samples (all relevant)
+Model path: models/Bert/bert-large-uncased-finetuned-v2.0
+Epoch 10: ==================================================
+Training loss: 0.03942345041372189
+Test loss: 0.9578638195497398
+Test accuracy: 0.7902777777777777
+
+Training set: 18k samples (all relevant)
+Model path: models/Bert/bert-large-uncased-finetuned-v2.1
+Epoch 20: ==================================================
+Training loss: 0.02247349448914368
+Test loss: 1.2536303095892396
+Test accuracy: 0.7825

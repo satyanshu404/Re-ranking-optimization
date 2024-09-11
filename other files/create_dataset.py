@@ -2,7 +2,7 @@
 This script generates a dataset for the re-ranking optimization model. 
 The dataset is structured as follows:
 - Each row consists of a query, a corresponding positive document, and a negative document.
-- Positive documents are labeled with 1, while negative documents are labeled with -1.
+- Positive document A are labeled with 1, while negative documents B are labeled with 0.
 - The dataset is balanced by ensuring an equal number of positive and negative documents.
 """
 import os

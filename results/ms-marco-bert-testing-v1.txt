@@ -1,0 +1,39 @@
+
+Testing set: 500 samples (relevant + non-relevant)
+Dataset path: data/tmp_test/msmarco-doctrain-rel-nrel.tsv
+Model path: models/Bert/bert-large-uncased-finetuned-v1.0
+=====================================================================
+Model Performance Metrics:
+Accuracy: 0.98
+Precision: 1.00
+Recall: 0.97
+F1 Score: 0.98
+Confusion Matrix:
+ [[249   1]
+ [  7 243]]
+
+Testing set: 4k samples (all relevant)
+Dataset path: data/tmp_test/msmarco-doctrain-all-rel.tsv
+Model path: models/Bert/bert-large-uncased-finetuned-v2.0
+=====================================================================
+Model Performance Metrics:
+Accuracy: 0.81
+Precision: 0.79
+Recall: 0.85
+F1 Score: 0.82
+Confusion Matrix:
+ [[780 220]
+ [154 846]]
+
+Testing set: 4k samples (all relevant)
+Dataset path: data/tmp_test/msmarco-doctrain-all-rel.tsv
+Model path: models/Bert/bert-large-uncased-finetuned-v2.1
+=====================================================================
+Model Performance Metrics:
+Accuracy: 0.82
+Precision: 0.80
+Recall: 0.84
+F1 Score: 0.82
+Confusion Matrix:
+ [[796 204]
+ [163 837]]
