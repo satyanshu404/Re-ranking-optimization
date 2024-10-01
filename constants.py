@@ -1,107 +1,121 @@
 '''All the constants used in the project are defined here'''
+import json
 import os
 from dataclasses import dataclass, field
 from typing import List
 
+@dataclass
+class DownloadMSMARCOConstants:
+    ''' Constants for downloading MSMARCO dataset '''
+    SAVE_DIR = "data/MSMARCO"
+    DOWNLOAD_DATASET_LINK_PATH = "data/msmarco-dataset-download-links.json"
+    URLS: List[str] = field(init=False)
+
+    def __post_init__(self):
+        try:
+            with open(self.DOWNLOAD_DATASET_LINK_PATH, 'r', encoding='utf-8') as file:
+                self.URLS = json.load(file)
+        except FileNotFoundError:
+            raise FileNotFoundError(f"File not found at {self.DOWNLOAD_DATASET_LINK_PATH}..." ) from None
+        except json.JSONDecodeError:
+            raise ValueError(f"Error decoding JSON from {self.DOWNLOAD_DATASET_LINK_PATH}...") from None
+
+@dataclass
+class AllUrls:
+    ''' All the URLs used in the project '''
+    URLS: List = field(default_factory=lambda: {
+        "msmarco": {
+            "docs": "data/MSMARCO/documents/docs/msmarco-docs.tsv.gz",
+
+            "train": {
+                "subset_size": 5,
+                "queries": "data/MSMARCO/documents/train/msmarco-doctrain-queries.tsv.gz",
+                "qrels": "data/MSMARCO/documents/train/msmarco-doctrain-qrels.tsv.gz",
+                "top100": "data/MSMARCO/documents/train/msmarco-doctrain-top100.gz",
+                "relevant_save_path": "data/tmp_train/msmarco-doctrain-relevant.tsv",
+                "non_relevant_save_path": "data/tmp_train/msmarco-doctrain-non-relevant.tsv",
+            },
+            "test": {
+                "subset_size": 100,
+                "queries": "data/MSMARCO/documents/test/msmarco-test2019-queries.tsv.gz",
+                "qrels": "data/MSMARCO/documents/test/2019qrels-docs.txt",
+                "top100": "data/MSMARCO/documents/test/msmarco-doctest2019-top100.gz"
+            },
+            "dl19-judged": {
+                "subset_size": 100,
+                "queries": "data/MSMARCO/documents/dl19_judged/2019queries-docs-judged.tsv.gz",
+                "qrels": "data/MSMARCO/documents/dl19_judged/2019qrel-docs-judged.tsv.gz",
+                "top100": "data/MSMARCO/documents/dl19_judged/2019top100-docs-judged.tsv.gz"
+            }
+        }
+    })
+
+@dataclass
+class MapMSMARCOConstants:
+    ''' Constants for MAP@MSMARCO '''
+    DOCS_PATH = AllUrls().URLS["msmarco"]["docs"]
+
+    DATASET_TYPE = "msmarco"
+    TYPE = "train"  # train
+    SUBSET_SIZE = AllUrls().URLS[DATASET_TYPE][TYPE]["subset_size"]
+    QUERIES_PATH = AllUrls().URLS[DATASET_TYPE][TYPE]["queries"]
+    QRELS_PATH = AllUrls().URLS[DATASET_TYPE][TYPE]["qrels"]
+    TOP100_PATH = AllUrls().URLS[DATASET_TYPE][TYPE]["top100"]
+    RELEVANT_SAVE_PATH = AllUrls().URLS[DATASET_TYPE][TYPE]["relevant_save_path"]
+    NON_RELEVANT_SAVE_PATH = AllUrls().URLS[DATASET_TYPE][TYPE]["non_relevant_save_path"]
+
+@dataclass
+class MapAllMSMARCOConstants:
+    ''' Constants for MAP@MSMARCO '''
+    DOCS_PATH = AllUrls().URLS["msmarco"]["docs"]
+
+    DATASET_TYPE = "msmarco"
+    TYPE = "dl19-judged"  #test or dl19-judged
+    SUBSET_SIZE = AllUrls().URLS[DATASET_TYPE][TYPE]["subset_size"]
+    QUERIES_PATH = AllUrls().URLS[DATASET_TYPE][TYPE]["queries"]
+    QRELS_PATH = AllUrls().URLS[DATASET_TYPE][TYPE]["qrels"]
+    TOP100_PATH = AllUrls().URLS[DATASET_TYPE][TYPE]["top100"]
+    FILE_NAME = TOP100_PATH.rsplit("/", maxsplit=1)[-1].split(".")[0]
+    SAVE_PATH = f"data/tmp_test/msmarco-{FILE_NAME}-mapped.tsv"
+
+@dataclass
+class CreateDatasetConstants:
+    ''' Constants for creating dataset '''
+    RANDOM_STATE = 0
+    NUMBER_OF_INSTANCE_PER_CLASS = 367012  # max 367012
+    RELEVANT_DOCS_PATH = MapMSMARCOConstants.RELEVANT_SAVE_PATH
+    NON_RELEVANT_DOCS_PATH = MapMSMARCOConstants.NON_RELEVANT_SAVE_PATH
+    SAVE_PATH = f"data/tmp_train/msmarco-doc-train-{2*NUMBER_OF_INSTANCE_PER_CLASS}.tsv"
 
 @dataclass
 class BertConstants:
     ''' Constants for BERT model '''
     MODEL_CHECKPOINT = 'google-bert/bert-large-uncased'
-    TEST_SIZE = 0.2
-    BATCH_SIZE = 16
+    TEST_SIZE = 0.1
+    BATCH_SIZE = 32
+    VISIBLE_DEVICES = "0"
+    RANDOM_STATE = 0
     LEARNING_RATE = 1e-5
-    EPOCHS = 10
+    EPOCHS = 6
     NUMBER_OF_CLASSES = 2
-    DATASET_PATH = "data/tmp_train/msmarco-doc-train.tsv"
+    NUM_WORKERS = 4
+    DATASET_PATH = CreateDatasetConstants.SAVE_PATH
     SAVE_MODEL_DIR = "models/Bert"
     SAVE_TOKENIZER_DIR = "models/Bert"
-    SAVE_MODEL_PATH = "bert-large-uncased-finetuned-v3.0"
+    SAVE_MODEL_PATH = f"bert-large-uncased-finetuned-v3.2-{2*CreateDatasetConstants.NUMBER_OF_INSTANCE_PER_CLASS}"
 
 @dataclass
-class ModelEvaluationConstants:
-    ''' Constants for model evaluation '''
-    MODEL_CHECKPOINT = os.path.join(BertConstants.SAVE_MODEL_DIR, 'bert-large-uncased-finetuned-v2.1')
-    BATCH_SIZE = 32
-    TEST_DATASET_PATH = 'data/tmp_test/msmarco-doctrain-all-rel.tsv'
-
-@dataclass
-class GetTheScoreConstants:
+class GenerateScoresConstants:
     ''' Constants for getting the score class'''
-    MODEL_CHECKPOINT = BertConstants.SAVE_MODEL_PATH
-    DEFAULT_DEVICE = "cpu"
-    TEST_DATASET_PATH = "data/training/dataset.tsv"
+    MODEL_CHECKPOINT = os.path.join(BertConstants.SAVE_MODEL_DIR, BertConstants.SAVE_MODEL_PATH)
+    VISIBLE_DEVICES = BertConstants.VISIBLE_DEVICES
+    BATCH_SIZE = BertConstants.BATCH_SIZE
+    TEST_DATASET_PATH = MapAllMSMARCOConstants.SAVE_PATH
+    FILE_NAME = "-".join(TEST_DATASET_PATH.split(".")[0].split("-")[:-1])
+    SAVE_PATH = f"{FILE_NAME}-scores-{2*CreateDatasetConstants.NUMBER_OF_INSTANCE_PER_CLASS}.tsv"
 
 @dataclass
-class MapMSMARCOConstants:
-    ''' Constants for MAP@MSMARCO '''
-    QUERIES_PATH = "data/MSMARCO/msmarco-doctrain-queries.tsv.gz"
-    DOCS_LOOKUP_PATH = "data/MSMARCO/msmarco-docs-lookup.tsv.gz"
-    DOCTRAIN_QRELS_PATH = "data/MSMARCO/msmarco-doctrain-qrels.tsv.gz"
-    DOCTRAIN_TOP100_PATH = "data/MSMARCO/msmarco-doctrain-top100.gz"
-    DOCS_PATH = "data/MSMARCO/msmarco-docs.tsv.gz"
-    SUBSET_SIZE = 10
-    SAVE_PATH = "data/tmp_train/msmarco-doctrain.tsv"
-    RELEVANT_SAVE_PATH = "data/tmp_train/msmarco-doctrain-relevant.tsv"
-    NON_RELEVANT_SAVE_PATH = "data/tmp_train/msmarco-doctrain-non-relevant.tsv"
-
-@dataclass
-class CreateDatasetConstants:
-    ''' Constants for creating dataset '''
-    SAVE_PATH = "data/tmp_train/msmarco-doc-train.tsv"
-    CHUNK_SIZE = 1500
-    RELEVANT_DOCS_PATH = MapMSMARCOConstants.RELEVANT_SAVE_PATH
-    NON_RELEVANT_DOCS_PATH = MapMSMARCOConstants.NON_RELEVANT_SAVE_PATH
-
-@dataclass
-class CustomEvaluationConstants:
-    ''' Constants for custom evaluation '''
-    MODEL_CHECKPOINT = ModelEvaluationConstants.MODEL_CHECKPOINT
-    DATASET_PATH = "data/dev/dev_all_mapped_t10_with_scores.tsv"
-    K = 10
-    CHUNK_SIZE = CreateDatasetConstants.CHUNK_SIZE
-    SAVE_PATH = "results/trec_eval_2019.txt"
-    RUN_ID = "trec_eval_2019"
-
-@dataclass
-class MapQrelsConstants:
-    ''' Constants for mapping qrels '''
-    QUERIES_PATH = "data/MSMARCO/msmarco-doctrain-queries.tsv.gz"
-    DOCS_LOOKUP_PATH = "data/MSMARCO/msmarco-docs-lookup.tsv.gz"
-    DOCTRAIN_QRELS_PATH = "data/MSMARCO/msmarco-doctrain-qrels.tsv.gz"
-    QRELS_PATH = "data/MSMARCO/msmarco-doctrain-qrels.tsv.gz"
-    DOCS_PATH = MapMSMARCOConstants.DOCS_PATH
-    SAVE_PATH = "data/training/msmarco-doctrain-qrels-mapped-10k-n.tsv"
-    TOP_K = 10000
-    MAX_POSITIVE_DOC_COUNT = 16000
-
-@dataclass
-class MapAllMSMARCOConstants:
-    ''' Constants for MAP@MSMARCO '''
-    DOCS_PATH = "data/MSMARCO/msmarco-docs.tsv.gz"
-    DOCS_LOOKUP_PATH = "data/MSMARCO/msmarco-docs-lookup.tsv.gz"
-    QUERIES_PATH = "data/MSMARCO/msmarco-test2019-queries.tsv.gz"
-    DOCDEV_QRELS_PATH = "data/MSMARCO/msmarco-docdev-qrels.tsv.gz"
-    DOCDEV_TOP100_PATH = "data/MSMARCO/msmarco-doctest2019-top100.gz"
-    SAVE_PATH = "data/MSMARCO/dev_all_mapped_t10.tsv"
-    TOP_K_DOCUMENTS = 10
-
-@dataclass
-class DownloadMSMARCOConstants:
-    ''' Constants for downloading MSMARCO dataset '''
-    DOWNLOAD_PATH = "data/MSMARCO"
-    URLS: List = field(default_factory=lambda: [
-        # Docs
-        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-docs.tsv.gz",
-        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-docs-lookup.tsv.gz",
-
-        # Train dataset
-        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-doctrain-queries.tsv.gz",
-        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-doctrain-qrels.tsv.gz",
-        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-doctrain-top100.gz",
-        
-        # DL 19 dataset
-        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-test2019-queries.tsv.gz",
-        "https://msmarco.z22.web.core.windows.net/msmarcoranking/msmarco-doctest2019-top100.gz",
-        "https://trec.nist.gov/data/deep/2019qrels-docs.txt"
-    ])
+class EvaluationConstants:
+    ''' Constants for model evaluation '''
+    QREL_PATH = MapAllMSMARCOConstants.QRELS_PATH
+    RESULT_PATH = GenerateScoresConstants.SAVE_PATH
