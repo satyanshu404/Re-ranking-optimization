@@ -1,5 +1,7 @@
 '''
 Script will extract one q-d pair from top-100 docs for each query in qrel file.
+The relevant doc is selected by the q-d pair in qrel file.
+For the non-relevant q-d pairs, top K doc for selected from the top-100 file which is not in qrel.
 Main Idea:
     - The doc in qrel is consider as relevant
     - The doc in top-100 but not in qrel is consider as non-relevant
