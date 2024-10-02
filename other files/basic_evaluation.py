@@ -13,7 +13,7 @@ This script logs the following metrics:
 import logging
 import torch
 import pandas as pd
-from constants import ModelEvaluationConstants as const
+from constants import BasicModelEvaluation as const
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score,confusion_matrix
 from transformers import BertForSequenceClassification, AutoTokenizer
 
