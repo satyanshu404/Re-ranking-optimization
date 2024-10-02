@@ -1,7 +1,7 @@
 '''
 This script is use to get the lables for the query-doc pairs using the fine-tuned BERT model.
 The input to this script are:
-    - path to the dev/test dataset
+    - path to the dev/test dataset (top100 file of test/dev dataset)
     - path to the fine-tuned model
 The output of this script is:
     - a file with the query-doc pairs in the ranked for each query 
@@ -80,7 +80,7 @@ class GenerateScores:
                 
                 outputs = self.model(batch_input_ids, 
                                      attention_mask=batch_attention_mask)
-                scores = [x[1] for x in outputs.logits.cpu().numpy().tolist()]
+                scores = [x[1]-x[0] for x in outputs.logits.cpu().numpy().tolist()]
                 predictions.extend(scores)
 
         return predictions
