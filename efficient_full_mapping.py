@@ -24,7 +24,7 @@ def unique_qids(file_path: str) -> set:
 def map_docs(save_dir: str):
     """Generate separate files for relevant and non-relevant documents."""
     status = defaultdict(int)
-    required_doc_ids = get_required_doc_ids(const.TOP100_PATH, 100)
+    required_doc_ids = get_required_doc_ids(const.TOP100_PATH, const.SUBSET_SIZE)
 
     # Load data
     queries = load_queries(const.QUERIES_PATH)
