@@ -11,7 +11,6 @@ The script will generate a dataset in the following format:
 import os
 import logging
 import pandas as pd
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from constants import CreateDatasetConstants as const
 
 logging.basicConfig(level=logging.INFO)
@@ -40,16 +39,6 @@ class CreateDataset:
         text = f"Query:{query}\nDocument:{document}"
         return text
       
-    def chunk_text(self, text:str) -> str:
-        '''Split the text into chunks'''
-        # Initialize the text splitter
-        text_splitter = RecursiveCharacterTextSplitter(
-            chunk_size=const.CHUNK_SIZE,
-            separators=["\n\n", "\n", ".", "!", "?", ",", " ", ""]
-        )
-        chunks = text_splitter.split_text(text)
-        return chunks[0]
-    
     def make_prompt(self, queries, responses) -> list[str]:
         '''Generate the prompt for the dataset'''
         text = [
@@ -63,10 +52,13 @@ class CreateDataset:
         # Read the data
         logging.log(logging.INFO, "Reading the data...")
         relevant_docs = self.read_data(self.relevant_docs_path)
-        non_relevant_docs = self.read_data(self.non_relevant_docs_path)
+        relevant_docs = relevant_docs.sample(n=const.NUMBER_OF_INSTANCE_PER_CLASS, random_state=const.RANDOM_STATE)
 
-        assert 'query' in relevant_docs.columns, "Data does not have the required 'query' column..."
-        assert 'doc' in relevant_docs.columns, "Data does not have the required 'doc' column..."
+        non_relevant_docs = self.read_data(self.non_relevant_docs_path)
+        non_relevant_docs = non_relevant_docs.sample(n=const.NUMBER_OF_INSTANCE_PER_CLASS, random_state=const.RANDOM_STATE)
+
+        assert 'query' and 'doc' in relevant_docs.columns, "Data does not have the required 'query' and 'doc' columns..."
+        assert 'query' and 'doc' in non_relevant_docs.columns, "Data does not have the required 'query' and 'doc' columns..."
 
         # Generate the prompt
         logging.log(logging.INFO, "Generating the prompt...")
