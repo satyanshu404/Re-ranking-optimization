@@ -31,8 +31,12 @@ def download_dataset(datset_type: str, file_type: str):
     # Create the directory if it doesn't exist
     directory = os.path.join(data_dir, datset_type)
     directory = os.path.join(directory, file_type)
-    subprocess.run(["mkdir", "-p", directory], check=False)
-    logging.info("Download directory is set to %s...", directory)
+    # if not exists, create the directory
+    if not os.path.exists(directory):
+        subprocess.run(["mkdir", "-p", directory], check=False)
+        logging.info("Download directory is set to %s...", directory)
+    else:
+        logging.info("Download directory already exists at %s...", directory)
 
     # Download the selected file type
     logging.info("Downloading %s files...", file_type)
