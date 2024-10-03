@@ -99,6 +99,7 @@ class BertConstants:
     EPOCHS = 6
     NUMBER_OF_CLASSES = 2
     NUM_WORKERS = 4
+    TOKENIZATION_BATCH_SIZE = 1000
     DATASET_PATH = CreateDatasetConstants.SAVE_PATH
     SAVE_MODEL_DIR = "models/Bert"
     SAVE_TOKENIZER_DIR = "models/Bert"
