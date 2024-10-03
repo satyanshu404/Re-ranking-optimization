@@ -7,9 +7,9 @@ Change the hyperparameters in the BertConstants class from constants.py file.
 '''
 import os
 import logging
+from math import ceil
 import torch
 from tqdm import tqdm 
-from math import ceil
 import pandas as pd
 from constants import BertConstants as const
 from losses import CrossEntropyLoss
@@ -83,6 +83,7 @@ class Bert:
         logging.info("Number of classes set to: %s...", num_labels)
         logging.info("Optimizer set to: %s...", self.optimizer.__class__.__name__)
         logging.info("Batch size set to: %s...", const.BATCH_SIZE)
+        logging.info("Tokenizer batch size set to: %s...", const.TOKENIZATION_BATCH_SIZE)
         logging.info("Learning rate set to: %s...", const.LEARNING_RATE)
         logging.info("Visible device set to: %s...", const.VISIBLE_DEVICES)
         logging.info("Device set to: %s...", self.device)
@@ -99,7 +100,6 @@ class Bert:
     
     def batch_tokenize(self, data: list, batch_size: int) -> dict:
         '''Tokenize the data in batches'''
-        logging.info("Tokenizing the data in batches of %s...", batch_size)
         tokens = {"input_ids": [], "attention_mask": []}
         
         # Calculate total batches including remainder
@@ -129,8 +129,10 @@ class Bert:
 
         # Tokenize train and test data in batches
         logging.info("Tokenizing the data...")
-        train_tokens = self.batch_tokenize(list(x_train), batch_size=10000)
-        test_tokens = self.batch_tokenize(list(x_test), batch_size=10000)
+        logging.info("Tokenizing train data...")
+        train_tokens = self.batch_tokenize(list(x_train), batch_size=const.TOKENIZATION_BATCH_SIZE)
+        logging.info("Tokenizing test data...")
+        test_tokens = self.batch_tokenize(list(x_test), batch_size=const.TOKENIZATION_BATCH_SIZE)
 
         # Use TokenData for datasets
         logging.info("Creating DataLoader for training and testing...")
@@ -156,9 +158,8 @@ class Bert:
         
         total_loss = 0.0
         correct = 0
-        total_batches = ceil(len(test_loader.dataset) / test_loader.batch_size)
         with torch.no_grad():
-            for batch in tqdm(test_loader, desc="Evaluating", leave=False, total= total_batches):
+            for batch in tqdm(test_loader, desc="Evaluating", leave=False, total= len(test_loader)):
                 input_ids = batch['input_ids'].to(self.device)
                 attention_mask = batch['attention_mask'].to(self.device)
                 labels = batch['labels'].to(self.device)
@@ -183,8 +184,7 @@ class Bert:
             logging.info("Epoch %d: %s", epoch + 1, '='*50)
             total_train_loss = 0.0
             correct = 0
-            total_batches = ceil(len(train_loader.dataset) / train_loader.batch_size)
-            for batch in tqdm(train_loader, desc="Training", leave=False, total= total_batches):
+            for batch in tqdm(train_loader, desc="Training", leave=False, total= len(train_loader)):
                 self.optimizer.zero_grad()
                 input_ids = batch['input_ids'].to(self.device)
                 attention_mask = batch['attention_mask'].to(self.device)
