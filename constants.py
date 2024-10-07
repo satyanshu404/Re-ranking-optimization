@@ -82,7 +82,7 @@ class MapAllMSMARCOConstants:
 class CreateDatasetConstants:
     ''' Constants for creating dataset '''
     RANDOM_STATE = 0
-    NUMBER_OF_INSTANCE_PER_CLASS = 367012  # max 367012
+    NUMBER_OF_INSTANCE_PER_CLASS = 200000  # max 367012
     RELEVANT_DOCS_PATH = MapMSMARCOConstants.RELEVANT_SAVE_PATH
     NON_RELEVANT_DOCS_PATH = MapMSMARCOConstants.NON_RELEVANT_SAVE_PATH
     SAVE_PATH = f"data/tmp_train/msmarco-doc-train-{2*NUMBER_OF_INSTANCE_PER_CLASS}.tsv"
@@ -91,19 +91,19 @@ class CreateDatasetConstants:
 class BertConstants:
     ''' Constants for BERT model '''
     MODEL_CHECKPOINT = 'google-bert/bert-large-uncased'
-    TEST_SIZE = 0.1
+    TEST_SIZE = 0.2
     BATCH_SIZE = 32
-    VISIBLE_DEVICES = "0"
+    VISIBLE_DEVICES = "1"
     RANDOM_STATE = 0
     LEARNING_RATE = 1e-5
-    EPOCHS = 6
+    EPOCHS = 5
     NUMBER_OF_CLASSES = 2
     NUM_WORKERS = 4
     TOKENIZATION_BATCH_SIZE = 1000
     DATASET_PATH = CreateDatasetConstants.SAVE_PATH
     SAVE_MODEL_DIR = "models/Bert"
     SAVE_TOKENIZER_DIR = "models/Bert"
-    SAVE_MODEL_PATH = f"bert-large-uncased-finetuned-v3.2-{2*CreateDatasetConstants.NUMBER_OF_INSTANCE_PER_CLASS}"
+    SAVE_MODEL_PATH = f"bert-large-uncased-finetuned-v3.1-{2*CreateDatasetConstants.NUMBER_OF_INSTANCE_PER_CLASS}"
 
 @dataclass
 class GenerateScoresConstants:
@@ -112,6 +112,8 @@ class GenerateScoresConstants:
     VISIBLE_DEVICES = BertConstants.VISIBLE_DEVICES
     BATCH_SIZE = BertConstants.BATCH_SIZE
     TEST_DATASET_PATH = MapAllMSMARCOConstants.SAVE_PATH
+
+    SCORE_TYPE = 1   # 0 for absolute score, 1 for relative score (diff of logit 1 & logit 0)
     FILE_NAME = "-".join(TEST_DATASET_PATH.split(".")[0].split("-")[:-1])
     SAVE_PATH = f"{FILE_NAME}-scores-{2*CreateDatasetConstants.NUMBER_OF_INSTANCE_PER_CLASS}.tsv"
 
