@@ -37,6 +37,10 @@ class GenerateScores:
         logging.log(logging.INFO, "Visible device set to: %s...", const.VISIBLE_DEVICES)
         logging.log(logging.INFO, "Device set to: %s...", self.device)
         logging.log(logging.INFO, "Batch size set to: %s...", self.batch_size)
+        if const.SCORE_TYPE == 0:
+            logging.log(logging.INFO, "Score type set to: Absolute score (logit 1)...")
+        else:
+            logging.log(logging.INFO, "Score type set to: Relative score (diff of logit 1 & logit 0)...")
         logging.log(logging.INFO, "%s", '='*69)
 
     def load_data(self, data_path: str) -> pd.DataFrame:
@@ -80,7 +84,11 @@ class GenerateScores:
                 
                 outputs = self.model(batch_input_ids, 
                                      attention_mask=batch_attention_mask)
-                scores = [x[1]-x[0] for x in outputs.logits.cpu().numpy().tolist()]
+                # get the scores (absolute or difference)
+                if const.SCORE_TYPE == 0:
+                    scores = [x[1] for x in outputs.logits.cpu().numpy().tolist()]
+                else:
+                    scores = [x[1]-x[0] for x in outputs.logits.cpu().numpy().tolist()]
                 predictions.extend(scores)
 
         return predictions
