@@ -76,7 +76,7 @@ class GenerateScores:
         '''
         # process in the batches
         logging.info("Getting predictions for the data...")
-        predictions = []
+        predictions, scores = [], []
         with torch.no_grad():
             for i in range(0, len(input_ids), batch_size):
                 batch_input_ids = torch.tensor(input_ids[i:i+batch_size]).to(self.device)
@@ -84,14 +84,20 @@ class GenerateScores:
                 
                 outputs = self.model(batch_input_ids, 
                                      attention_mask=batch_attention_mask)
+                # get the predictions
+                predictions.extend(torch.argmax(outputs.logits, dim=-1).cpu().numpy().tolist())
+                # probs = torch.softmax(outputs.logits, dim=-1)
+                # preds = torch.argmax(probs, dim=-1).cpu().numpy().tolist()
+                # predictions.extend(preds.cpu().numpy())
                 # get the scores (absolute or difference)
                 if const.SCORE_TYPE == 0:
-                    scores = [x[1] for x in outputs.logits.cpu().numpy().tolist()]
+                    score = [x[1] for x in outputs.logits.cpu().numpy().tolist()]
                 else:
-                    scores = [x[1]-x[0] for x in outputs.logits.cpu().numpy().tolist()]
-                predictions.extend(scores)
+                    score = [x[1]-x[0] for x in outputs.logits.cpu().numpy().tolist()]
+                scores.extend(score)
 
-        return predictions
+
+        return predictions, scores
     
     def rank_data(self, data: pd.DataFrame) -> pd.DataFrame:
         ''' Rank the data based on the scores (logits) '''
@@ -107,7 +113,11 @@ class GenerateScores:
             # sorted_data = sorted_data.sort_values('rank', ascending=True)
             sorted_data = sorted_data.reset_index(drop=True)
             ranked_data = pd.concat([ranked_data, sorted_data], ignore_index=True)
-        ranked_data = ranked_data[['qid', 'docid', 'rank', 'score']]
+
+        if const.TYPE == 'fair':
+            ranked_data = ranked_data[['qid', 'query', 'docid', 'rank', 'score', 'prediction', 'annotation']]
+        else:
+            ranked_data = ranked_data[['qid', 'docid', 'rank', 'score', 'prediction']]
         return ranked_data
     
     def get_scores(self, file_path: str, save_path:str) -> None:
@@ -117,7 +127,7 @@ class GenerateScores:
         # Tokenize the data
         input_ids, attention_mask = self.tokenize_data(data)
         # Get the predictions
-        data['score'] = self.get_predictions(input_ids, attention_mask, self.batch_size)
+        data['prediction'], data['score'] = self.get_predictions(input_ids, attention_mask, self.batch_size)
         # Rank the data
         ranked_data = self.rank_data(data)
 
