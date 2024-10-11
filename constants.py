@@ -82,7 +82,7 @@ class MapAllMSMARCOConstants:
 class CreateDatasetConstants:
     ''' Constants for creating dataset '''
     RANDOM_STATE = 0
-    NUMBER_OF_INSTANCE_PER_CLASS = 200000  # max 367012
+    NUMBER_OF_INSTANCE_PER_CLASS = 100000  # max 367012
     RELEVANT_DOCS_PATH = MapMSMARCOConstants.RELEVANT_SAVE_PATH
     NON_RELEVANT_DOCS_PATH = MapMSMARCOConstants.NON_RELEVANT_SAVE_PATH
     SAVE_PATH = f"data/tmp_train/msmarco-doc-train-{2*NUMBER_OF_INSTANCE_PER_CLASS}.tsv"
@@ -106,12 +106,25 @@ class BertConstants:
     SAVE_MODEL_PATH = f"bert-large-uncased-finetuned-v3.1-{2*CreateDatasetConstants.NUMBER_OF_INSTANCE_PER_CLASS}"
 
 @dataclass
+class FairnessDatasetCreationConstants:
+    ''' Constants for creating fairness dataset '''
+    DIRECTORY_PATH = '/home/satyanshu/satyanshu_fair_retrieval_data'
+    SAVE_PATH = "data/fairness/all-fair-dataset-merged.tsv"
+    QREL_PATH = "data/fairness/all-fair-dataset-merged-qrels.tsv"
+
+@dataclass
 class GenerateScoresConstants:
     ''' Constants for getting the score class'''
     MODEL_CHECKPOINT = os.path.join(BertConstants.SAVE_MODEL_DIR, BertConstants.SAVE_MODEL_PATH)
     VISIBLE_DEVICES = BertConstants.VISIBLE_DEVICES
     BATCH_SIZE = BertConstants.BATCH_SIZE
-    TEST_DATASET_PATH = MapAllMSMARCOConstants.SAVE_PATH
+
+    TYPE = 'fair'          # fair or mamarco
+
+    if TYPE == 'fair':
+        TEST_DATASET_PATH = FairnessDatasetCreationConstants.SAVE_PATH
+    else:
+        TEST_DATASET_PATH = MapAllMSMARCOConstants.SAVE_PATH
 
     SCORE_TYPE = 1   # 0 for absolute score, 1 for relative score (diff of logit 1 & logit 0)
     FILE_NAME = "-".join(TEST_DATASET_PATH.split(".")[0].split("-")[:-1])
@@ -120,5 +133,18 @@ class GenerateScoresConstants:
 @dataclass
 class EvaluationConstants:
     ''' Constants for model evaluation '''
-    QREL_PATH = MapAllMSMARCOConstants.QRELS_PATH
+    DOCS_PER_QUERY = 100      # to consider all: 100
+    EVALUATE_FAIRNESS = False
+    EVALUATION_QUERYWISE = True
+
+    if GenerateScoresConstants.TYPE == 'fair':
+        EVALUATE_FAIRNESS = True
+        QREL_PATH = FairnessDatasetCreationConstants.QREL_PATH
+    else:
+        QREL_PATH = MapAllMSMARCOConstants.QRELS_PATH
+
+    if EVALUATION_QUERYWISE:
+        MERTIC_PATH = f"data/fairness/scores/metrics-{DOCS_PER_QUERY}-{2*CreateDatasetConstants.NUMBER_OF_INSTANCE_PER_CLASS}.tsv"
+        FAIRNESS_METRIC_PATH = f"data/fairness/scores/fairness-{DOCS_PER_QUERY}-{2*CreateDatasetConstants.NUMBER_OF_INSTANCE_PER_CLASS}.tsv"
+
     RESULT_PATH = GenerateScoresConstants.SAVE_PATH
